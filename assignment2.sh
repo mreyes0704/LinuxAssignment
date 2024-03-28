@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#1. Netlan System Modification
 # Check if the netplan configuration file exists
 netplan_file="/etc/netplan/50-cloud-init.yaml"
 if [ ! -f "$netplan_file" ]; then
@@ -30,22 +30,15 @@ sudo netplan apply
 
 echo "Configuration updated successfully."
 
-# Update package index
+# 2. Apache and squid proxy app installation in defaualt configuration
+# Install and update apache2
 sudo apt update
-
-# Install Apache2
 sudo apt install -y apache2
-
-# Start Apache2
 sudo systemctl start apache2
-
-# Enable Apache2 to start on boot
 sudo systemctl enable apache2
-
-# Stop Apache2
 sudo systemctl stop apache2
 
-# Revert to default Apache2 configuration
+# Revert Apache2 in default configuration
 sudo cp /etc/apache2/apache2.conf.orig /etc/apache2/apache2.conf
 sudo cp /etc/apache2/ports.conf.orig /etc/apache2/ports.conf
 
@@ -55,16 +48,13 @@ sudo rm -f /etc/apache2/sites-enabled/*.conf
 
 # Enable default virtual host
 sudo ln -s /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-enabled/000-default.conf
-
-# Restart Apache2
 sudo systemctl start apache2
 
 # Check if Apache2 service is running
 if systemctl is-active --quiet apache2; then
     echo "Apache2 is running."
-
-    
-    # Check if Apache2 configuration is default
+  
+    # Check if Apache2 configuration is default configuration
     if [ -f "/etc/apache2/apache2.conf" ]; then
         echo "Apache2 is using the default configuration."
     else
@@ -73,17 +63,11 @@ if systemctl is-active --quiet apache2; then
 else
     echo "Apache2 is not running."
 fi
-#Squid WebProxy
-# Update package index
+
+# Install and update Squid WebProxy
 sudo apt update
-
-# Install Squid
 sudo apt install -y squid
-
-# Start Squid service
 sudo systemctl start squid
-
-# Enable Squid service to start on boot
 sudo systemctl enable squid
 
 # Check if Squid service is running
@@ -100,7 +84,7 @@ if systemctl is-active --quiet squid; then
 else
     echo "Squid service is not running."
 fi
-#Firewall Script
+# 3. Firewall Script configuration
 # Enable ufw
 sudo ufw enable
 
@@ -112,8 +96,6 @@ sudo ufw allow http
 
 # Allow web proxy on both interfaces (assuming default Squid proxy port 3128)
 sudo ufw allow 3128
-
-# Enable logging (optional)
 sudo ufw logging on
 
 # Reload ufw to apply changes
@@ -122,9 +104,8 @@ sudo ufw reload
 # Display firewall rules
 sudo ufw status verbose
 
-#!/bin/bash
+# 4. Create users
 
-# List of users to create
 usernames=("dennis" "aubrey" "captain" "snibbles" "brownie" "scooter" "sandy" "perrier" "cindy" "tiger" "yoda")
 
 # Create users with home directory and bash shell
@@ -133,11 +114,10 @@ for user in "${usernames[@]}"; do
 done
 
 #Create SSH Keys for rsa and ed25519 algorithm
-# Loop through each username
 for username in "${usernames[@]}"; do
     # Check if the user exists
     if id "$username" &>/dev/null; then
-        echo "Adding SSH keys for $username"
+        echo "SSH keys for $username is been added"
 
         # Create user's SSH directory if it doesn't exist
         sudo -u "$username" mkdir -p /home/"$username"/.ssh
@@ -163,6 +143,7 @@ for username in "${usernames[@]}"; do
 done
 
 # Configure userid dennis to have sudo access
+
 userid="dennis"
 
 # Check if the user exists
@@ -174,9 +155,6 @@ else
     echo "User $userid does not exist."
 fi
 
-# Define the userid
-userid="dennis"
-
 # Define the public key
 public_key="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG4rT3vTt99Ox5kndS4HmgTrKBT8SKzhK4rhGkEVGlCI student@generic-vm"
 
@@ -186,10 +164,10 @@ if ! id "$userid" &>/dev/null; then
     exit 1
 fi
 
-# Ensure the .ssh directory exists
+# Make the .ssh directory 
 sudo mkdir -p /home/"$userid"/.ssh
 
-# Set the correct permissions for the .ssh directory
+# Set the correct permissions
 sudo chmod 700 /home/"$userid"/.ssh
 
 # Add the public key to the authorized_keys file
